@@ -1,5 +1,7 @@
 # asla-web-project
 ASLA: Autonomous Self-Learning Agents
+The project is the landing page of the "ASLA Project." This page serves as the primary entry point for users, aiming to communicate the project's value proposition, showcase key features, and drive user registration/contact.
+About ASLA
 ASLA is a cutting-edge visual simulation of a fully autonomous AI software engineering agency. It demonstrates the future of "Agentic Workflows," where specialized AI models don't just answer prompts but collaborate in a structured, self-improving pipeline to build, deploy, and refine complex software projects.
 🚀 The Core Vision
 ASLA moves beyond simple chat interfaces into a coordinated multi-agent system. By simulating a complete software development lifecycle (SDLC), the platform showcases how autonomous agents can handle everything from high-level product strategy to low-level bug fixing and infrastructure management.
