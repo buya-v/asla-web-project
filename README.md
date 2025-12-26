@@ -1,2 +1,2 @@
 # asla-web-project
-Create a simple web page introducing AI
+Create a simple web page introducing ASLA
