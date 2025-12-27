@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASLA | Autonomous Self-Learning Agents</title>
+    <!-- React, Babel, Tailwind, Framer Motion CDNs -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'asla-bg-primary': '#020617',
+                        'asla-bg-secondary': '#0f172a',
+                        'asla-accent-primary': '#38bdf8',
+                        'asla-accent-secondary': '#818cf8',
+                        'asla-accent-tertiary': '#fbbf24',
+                        'asla-text-main': '#f8fafc',
+                        'asla-text-muted': '#94a3b8',
+                        'asla-success': '#22c55e',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/css">
+        body {
+            background-color: #020617;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-blue {
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+        .glow-indigo {
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.2);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        .agent-card:hover {
+            border-color: rgba(56, 189, 248, 0.5);
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { motion, AnimatePresence } = FramerMotion;
+
+        // --- Data ---
+        const AGENTS = [
+            { id: 'prod', name: 'Product Agent', icon: '🧭', color: 'text-asla-accent-primary', focus: 'Requirements gathering', prompt: 'Optimized for Gemini-1.5-Pro: "Deconstruct messy user intent into structured PRDs."' },
+            { id: 'orch', name: 'Orchestrator', icon: '🧠', color: 'text-asla-accent-secondary', focus: 'Task decomposition', prompt: 'Optimized for Gemini-1.5-Flash: "Parallelize dependency-free atomic sub-tasks."' },
+            { id: 'exec', name: 'Execution Unit', icon: '💻', color: 'text-white', focus: 'Code Synthesis', prompt: 'Optimized for Code-Specific Fine-tuning: "Write idempotent, modular React components."' },
+            { id: 'devops', name: 'DevOps Agent', icon: '☁️', color: 'text-asla-accent-secondary', focus: 'Deployment & CI/CD', prompt: 'Optimized for Infrastructure-as-Code: "Terraform/K8s automation with zero-downtime strategy."' },
+            { id: 'qa', name: 'QA Monitoring', icon: '🔍', color: 'text-asla-success', focus: 'Regression testing', prompt: 'Optimized for Visual Regression: "Map pixel-diffs and functional unit coverage."' },
+            { id: 'learn', name: 'Learning Agent', icon: '✨', color: 'text-asla-accent-tertiary', focus: 'System optimization', prompt: 'Recursive Optimization Loop: "Analyze failure logs and rewrite failed system prompts."' },
+        ];
+
+        const STATS = [
+            { label: 'System Accuracy', value: 98.4, unit: '%', trend: '+2.1%', icon: '📈' },
+            { label: 'Avg. Cycle Time', value: 14.2, unit: 'min', trend: '-18%', icon: '⚡' },
+            { label: 'Autonomous Deployments', value: 1242, unit: '', trend: '+142', icon: '🚀' },
+        ];
+
+        // --- Components ---
+
+        const SidebarItem = ({ active, label, icon, onClick }) => (
+            <div 
+                onClick={onClick}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
+                    active ? 'bg-asla-accent-primary/10 text-asla-accent-primary border-r-2 border-asla-accent-primary' : 'text-asla-text-muted hover:bg-white/5'
+                }`}
+            >
+                <span className="text-xl">{icon}</span>
+                <span className="font-medium">{label}</span>
+            </div>
+        );
+
+        const AgentCard = ({ agent }) => {
+            const [hovered, setHovered] = useState(false);
+            return (
+                <div 
+                    className="agent-card glass p-6 rounded-2xl relative transition-all duration-300"
+                    onMouseEnter={() => setHovered(true)}
+                    onMouseLeave={() => setHovered(false)}
+                >
+                    <div className="flex items-start justify-between mb-4">
+                        <div className={`text-3xl p-3 rounded-lg bg-white/5`}>{agent.icon}</div>
+                        <div className="text-[10px] font-mono text-asla-text-muted uppercase tracking-widest">Active</div>
+                    </div>
+                    <h3 className="text-lg font-bold mb-1">{agent.name}</h3>
+                    <p className="text-sm text-asla-text-muted mb-4">{agent.focus}</p>
+                    
+                    <div className={`text-[11px] font-mono p-3 bg-black/40 rounded-lg transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-40'}`}>
+                        <span className="text-asla-accent-primary">Prompt:</span> {agent.prompt}
+                    </div>
+                </div>
+            );
+        };
+
+        const WorkflowSimulator = () => {
+            const [step, setStep] = useState(-1);
+            const [logs, setLogs] = useState([]);
+
+            const startSimulation = () => {
+                setStep(0);
+                setLogs([{ text: 'Initializing Workflow Engine...', time: '10:00:01' }]);
+            };
+
+            useEffect(() => {
+                if (step >= 0 && step < AGENTS.length) {
+                    const timer = setTimeout(() => {
+                        const currentAgent = AGENTS[step];
+                        setLogs(prev => [...prev, { text: `[${currentAgent.name}] ${currentAgent.focus}... Done.`, time: new Date().toLocaleTimeString().split(' ')[0] }]);
+                        setStep(step + 1);
+                    }, 1200);
+                    return () => clearTimeout(timer);
+                } else if (step === AGENTS.length) {
+                    setLogs(prev => [...prev, { text: 'Workflow Complete. Deploying...', time: 'SUCCESS' }]);
+                }
+            }, [step]);
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 glass rounded-2xl p-8 relative overflow-hidden">
+                        <div className="flex justify-between items-center mb-8">
+                            <h2 className="text-2xl font-bold font-heading">SDLC Engine Visualizer</h2>
+                            <button 
+                                onClick={startSimulation}
+                                className="px-6 py-2 bg-asla-accent-primary text-asla-bg-primary font-bold rounded-lg hover:bg-asla-accent-primary/80 transition-all flex items-center space-x-2"
+                            >
+                                <span>🚀</span> <span>Trigger Build</span>
+                            </button>
+                        </div>
+
+                        <div className="flex items-center justify-between relative">
+                            {/* Connector Line */}
+                            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/10 -translate-y-1/2 z-0"></div>
+                            
+                            {AGENTS.map((agent, i) => (
+                                <div key={agent.id} className="relative z-10 flex flex-col items-center">
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${
+                                        step === i ? 'bg-asla-accent-primary scale-125 glow-blue' : step > i ? 'bg-asla-success' : 'bg-asla-bg-secondary border border-white/20'
+                                    }`}>
+                                        {step > i ? '✅' : agent.icon}
+                                    </div>
+                                    <span className="text-[10px] mt-2 font-mono text-asla-text-muted whitespace-nowrap">{agent.name.split(' ')[0]}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Animated Packet */}
+                        {step >= 0 && step < AGENTS.length && (
+                            <motion.div 
+                                animate={{ x: `${(step * 20)}%` }}
+                                className="absolute top-[52%] left-[8%] w-4 h-4 bg-asla-accent-primary rounded-full blur-sm"
+                            />
+                        )}
+                    </div>
+
+                    <div className="glass rounded-2xl p-6 h-[300px] flex flex-col">
+                        <h3 className="text-xs font-mono text-asla-text-muted mb-4 flex items-center">
+                            <span className="w-2 h-2 rounded-full bg-asla-success animate-pulse mr-2"></span>
+                            AGENT_LOGS_STREAM
+                        </h3>
+                        <div className="flex-1 overflow-y-auto space-y-2 font-mono text-xs">
+                            {logs.map((log, i) => (
+                                <div key={i} className="flex space-x-2 border-b border-white/5 pb-1">
+                                    <span className="text-asla-accent-secondary">[{log.time}]</span>
+                                    <span className="text-asla-text-main">{log.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const MainDashboard = () => (
+            <div className="space-y-8 animate-in fade-in duration-700">
+                {/* Hero */}
+                <section className="relative glass rounded-3xl p-10 overflow-hidden">
+                    <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-asla-accent-primary/10 rounded-full blur-[100px]"></div>
+                    <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-asla-accent-secondary/10 rounded-full blur-[100px]"></div>
+                    
+                    <div className="relative z-10 max-w-2xl">
+                        <span className="px-4 py-1.5 rounded-full bg-asla-accent-primary/10 text-asla-accent-primary text-xs font-bold border border-asla-accent-primary/20 tracking-wider uppercase mb-6 inline-block">
+                            Next-Gen Agentic Workflows
+                        </span>
+                        <h1 className="text-5xl lg:text-6xl font-extrabold font-heading leading-tight mb-6">
+                            The Self-Evolving <br/>
+                            <span className="gradient-text">Software Agency</span>
+                        </h1>
+                        <p className="text-lg text-asla-text-muted mb-8 leading-relaxed">
+                            Deploy high-performance autonomous teams that learn from every deployment. 
+                            ASLA orchestrates multiple LLM-powered agents to design, build, and optimize enterprise applications 24/7.
+                        </p>
+                        <div className="flex space-x-4">
+                            <button className="px-8 py-3 bg-asla-accent-primary text-asla-bg-primary font-bold rounded-xl hover:scale-105 transition-transform">Launch Simulation</button>
+                            <button className="px-8 py-3 glass text-asla-text-main font-bold rounded-xl hover:bg-white/10 transition-colors">Documentation</button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {STATS.map((stat, i) => (
+                        <div key={i} className="glass p-6 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <p className="text-asla-text-muted text-sm font-medium">{stat.label}</p>
+                                <div className="flex items-baseline space-x-2 mt-1">
+                                    <h3 className="text-3xl font-bold font-heading">{stat.value}{stat.unit}</h3>
+                                    <span className={`text-xs font-bold ${stat.trend.startsWith('+') ? 'text-asla-success' : 'text-asla-accent-secondary'}`}>
+                                        {stat.trend}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="text-4xl opacity-50">{stat.icon}</div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Agents Grid */}
+                <div>
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 className="text-3xl font-bold font-heading">The ASLA Fleet</h2>
+                            <p className="text-asla-text-muted">Specialized agents working in a recursive feedback loop.</p>
+                        </div>
+                        <div className="glass px-4 py-2 rounded-lg flex items-center space-x-2">
+                            <span className="text-asla-success text-xs">●</span>
+                            <span className="text-xs font-mono font-bold tracking-widest">GEMINI-1.5-BACKBONE</span>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {AGENTS.map(agent => <AgentCard key={agent.id} agent={agent} />)}
+                    </div>
+                </div>
+
+                {/* Simulation Section */}
+                <WorkflowSimulator />
+
+                {/* Learning Loop / Metrics */}
+                <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-12">
+                    <div className="relative flex items-center justify-center p-12 glass rounded-3xl overflow-hidden min-h-[400px]">
+                        <div className="absolute inset-0 animate-pulse-slow bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-asla-accent-tertiary/10 via-transparent to-transparent"></div>
+                        <div className="relative z-10 text-center">
+                            <div className="w-48 h-48 rounded-full border-4 border-dashed border-asla-accent-tertiary/30 animate-[spin_20s_linear_infinite] flex items-center justify-center">
+                                <div className="w-32 h-32 rounded-full border-2 border-asla-accent-primary/40 animate-[spin_10s_linear_infinite_reverse] flex items-center justify-center">
+                                    <span className="text-5xl animate-bounce">✨</span>
+                                </div>
+                            </div>
+                            <h3 className="text-2xl font-bold mt-8">The Optimization Loop</h3>
+                            <p className="text-asla-text-muted max-w-xs mt-2">Continuous failure analysis and system-prompt refinement based on production metrics.</p>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-6 flex flex-col justify-center">
+                        <h2 className="text-4xl font-bold font-heading">Self-Evolving Intelligence</h2>
+                        <p className="text-asla-text-muted leading-relaxed">
+                            Unlike traditional software engines, ASLA learns from its own code reviews and QA failures. Every bug found by the QA Agent is fed into the Learning Agent to update the Orchestrator's prompt library.
+                        </p>
+                        <div className="space-y-4">
+                            {[
+                                { label: 'Knowledge Base Expansion', val: 88 },
+                                { label: 'Prompt Efficiency', val: 94 },
+                                { label: 'Execution Safety', val: 99 }
+                            ].map((bar, i) => (
+                                <div key={i}>
+                                    <div className="flex justify-between text-xs font-mono mb-2">
+                                        <span>{bar.label}</span>
+                                        <span className="text-asla-accent-primary">{bar.val}%</span>
+                                    </div>
+                                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-asla-accent-primary rounded-full" style={{ width: `${bar.val}%` }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Contact CTA */}
+                <section className="glass rounded-3xl p-12 text-center border-asla-accent-primary/20">
+                    <h2 className="text-3xl font-bold font-heading mb-4">Ready to automate your agency?</h2>
+                    <p className="text-asla-text-muted mb-8 max-w-xl mx-auto">Get early access to the ASLA Beta and start deploying self-learning agent clusters in your VPC.</p>
+                    <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <input 
+                            type="email" 
+                            placeholder="work@company.com" 
+                            className="w-full sm:w-80 px-6 py-4 rounded-xl bg-asla-bg-secondary border border-white/10 focus:outline-none focus:border-asla-accent-primary transition-colors"
+                        />
+                        <button className="w-full sm:w-auto px-8 py-4 bg-asla-accent-primary text-asla-bg-primary font-bold rounded-xl hover:scale-105 transition-transform">
+                            Request Demo
+                        </button>
+                    </div>
+                </section>
+            </div>
+        );
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('Vision');
+
+            return (
+                <div className="flex min-h-screen bg-asla-bg-primary text-asla-text-main font-sans selection:bg-asla-accent-primary selection:text-asla-bg-primary">
+                    {/* Sidebar */}
+                    <aside className="hidden lg:flex w-72 border-r border-white/5 flex-col fixed h-full bg-asla-bg-primary z-50">
+                        <div className="p-8">
+                            <div className="flex items-center space-x-3 mb-10">
+                                <div className="w-10 h-10 bg-asla-accent-primary rounded-lg flex items-center justify-center font-bold text-asla-bg-primary text-xl">A</div>
+                                <span className="text-2xl font-extrabold font-heading tracking-tight">ASLA</span>
+                            </div>
+
+                            <nav className="space-y-2">
+                                <SidebarItem active={activeTab === 'Vision'} icon="🏠" label="Vision" onClick={() => setActiveTab('Vision')} />
+                                <SidebarItem active={activeTab === 'Architecture'} icon="🏛️" label="Architecture" onClick={() => setActiveTab('Architecture')} />
+                                <SidebarItem active={activeTab === 'Agents'} icon="🤖" label="Agents" onClick={() => setActiveTab('Agents')} />
+                                <SidebarItem active={activeTab === 'Demo'} icon="⚡" label="Live Demo" onClick={() => setActiveTab('Demo')} />
+                                <SidebarItem active={activeTab === 'Contact'} icon="✉️" label="Contact" onClick={() => setActiveTab('Contact')} />
+                            </nav>
+                        </div>
+                        
+                        <div className="mt-auto p-8">
+                            <div className="glass rounded-xl p-4 text-xs">
+                                <p className="text-asla-text-muted mb-2">System Status</p>
+                                <div className="flex items-center space-x-2">
+                                    <span className="w-2 h-2 rounded-full bg-asla-success animate-pulse"></span>
+                                    <span className="font-mono">Nodes Healthy</span>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    {/* Main Content */}
+                    <main className="flex-1 lg:ml-72 p-6 lg:p-12">
+                        {/* Header */}
+                        <header className="flex justify-between items-center mb-12">
+                            <div>
+                                <h4 className="text-xs font-mono text-asla-accent-secondary uppercase tracking-[0.3em] font-bold">Workspace / {activeTab}</h4>
+                            </div>
+                            <div className="flex items-center space-x-6">
+                                <div className="hidden sm:flex space-x-4 text-sm font-medium text-asla-text-muted">
+                                    <a href="#" className="hover:text-asla-accent-primary transition-colors">Docs</a>
+                                    <a href="#" className="hover:text-asla-accent-primary transition-colors">Github</a>
+                                </div>
+                                <button className="p-2 glass rounded-full hover:bg-white/10 transition-colors">👤</button>
+                            </div>
+                        </header>
+
+                        {/* Body Switching */}
+                        {activeTab === 'Vision' ? (
+                            <MainDashboard />
+                        ) : (
+                            <div className="h-[60vh] flex flex-col items-center justify-center glass rounded-3xl text-center p-12">
+                                <span className="text-6xl mb-6">🚧</span>
+                                <h2 className="text-3xl font-bold mb-2">{activeTab} Section</h2>
+                                <p className="text-asla-text-muted max-w-md">This section is currently being architected by the Autonomous Execution Unit. Please check back shortly.</p>
+                                <button 
+                                    onClick={() => setActiveTab('Vision')}
+                                    className="mt-8 px-6 py-2 bg-asla-accent-primary text-asla-bg-primary font-bold rounded-lg"
+                                >
+                                    Back to Dashboard
+                                </button>
+                            </div>
+                        )}
+
+                        <footer className="mt-20 pt-8 border-t border-white/5 text-asla-text-muted text-sm flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                            <div>© 2024 ASLA Project. Engineered for the Agentic Era.</div>
+                            <div className="flex space-x-6 font-mono text-xs">
+                                <span className="hover:text-asla-accent-primary cursor-pointer">PRIVACY_POLICY</span>
+                                <span className="hover:text-asla-accent-primary cursor-pointer">TERMS_OF_SERVICE</span>
+                            </div>
+                        </footer>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+</html>
