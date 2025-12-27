@@ -3,9 +3,9 @@ ASLA: Autonomous Self-Learning Agents
 The project is the landing page of the "ASLA Project." This page serves as the primary entry point for users, aiming to communicate the project's value proposition, showcase key features, and drive user registration/contact.
 About ASLA
 ASLA is a cutting-edge visual simulation of a fully autonomous AI software engineering agency. It demonstrates the future of "Agentic Workflows," where specialized AI models don't just answer prompts but collaborate in a structured, self-improving pipeline to build, deploy, and refine complex software projects.
-ð The Core Vision
+Ã°ÂÂÂ The Core Vision
 ASLA moves beyond simple chat interfaces into a coordinated multi-agent system. By simulating a complete software development lifecycle (SDLC), the platform showcases how autonomous agents can handle everything from high-level product strategy to low-level bug fixing and infrastructure management.
-ð§  Technical Architecture
+Ã°ÂÂ§Â  Technical Architecture
 1. Multi-Agent Orchestration
 The system utilizes a specialized fleet of agents, each with a distinct role and "system prompt" optimized for their domain:
 Product Agent: Transforms vague visions into structured technical requirements and user stories using gemini-3-pro-preview.
@@ -24,12 +24,12 @@ The simulation includes a real Isomorphic-Git implementation backed by Lightning
 Real Git history visualization.
 Codebase export as ZIP archives.
 Cloning of existing public repositories for autonomous refactoring.
-ð  Tech Stack
+Ã°ÂÂÂ  Tech Stack
 Intelligence: Google Gemini API (gemini-3-pro-preview & gemini-3-flash-preview).
 Frontend: React 19, Tailwind CSS, Framer Motion (for physics-based agent animations).
 Visuals: Lucide Icons & Recharts for real-time telemetry.
 Storage: Isomorphic-Git + LightningFS (IndexedDB persistence).
-ð How to Use
+Ã°ÂÂÂ How to Use
 Initialize: Define a "Vision" (e.g., "A decentralized cat social network").
 Observe: Watch the Event Bus stream messages between agents.
 Review: Use the Client Portal to test the generated prototype in a sandboxed staging environment.
